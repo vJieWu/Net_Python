@@ -7,18 +7,15 @@ FilterLost = 10
 
 def main():
     ip_port = ('127.0.0.1', UDPPort)
-    sk = socket.socket()
+    sk = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sk.bind(ip_port)
-    sk.listen(5)
-    print('start listening')
+    frame_expected = 0
 
     while True:
-        frame_expected = 0  # seq number of expected frame
-        conn, addr = sk.accept()
-        client_data = conn.recv(1024)
-        print(str(client_data, 'utf8'))
-        conn.send(bytes('ack', 'utf8'))
-        conn.close()
+        data, addr = sk.recvfrom(1024)
+        print(str(data, 'utf8'))
+        print(addr)
+        #sk.sendto(bytes('ACK'+str(frame_expected), 'utf8'), addr)
 
 
 if __name__ == '__main__':
