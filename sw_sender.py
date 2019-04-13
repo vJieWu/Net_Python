@@ -59,7 +59,7 @@ def filter_frame(frame):
 
         else:
             print('Frame Sent Successfully')
-
+        # 发送之前0bit填充 frame{str} ################
         sk.sendto(bytes(frame, 'utf8'), ip_port)
         print('Expected ACK: ' + frame[8])
 
