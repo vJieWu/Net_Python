@@ -1,11 +1,5 @@
+import json
 import socket
-
-UDPPort = 8888
-FilterError = 10
-FilterLost = 10
-Frame_head = '01111110'
-Frame_tail = '01111110'
-GenXString = '10001000000100001'
 
 
 def check_sum(str1, GenXString):
@@ -31,7 +25,7 @@ def check_sum(str1, GenXString):
     return checksum
 
 
-def get_checksum(frame):
+def get_checksum(frame, GenXString):
     info_cyc = str(frame, 'utf8')[8:-8]
     remainder = check_sum(info_cyc, GenXString)
     # remainder = CRCCCITT.CRCCCITT().calculate(str(int(info_cyc, 2)))
@@ -44,6 +38,14 @@ def get_checksum(frame):
 
 
 def main():
+    f = open('lab3.json', encoding='utf-8')
+    config = json.load(f)
+
+    UDPPort = config['UDPPort']
+    Frame_head = config['Frame_head']
+    Frame_tail = config['Frame_tail']
+    GenXString = config['GenXString']
+
     loop = 20
     ip_port = ('127.0.0.1', UDPPort)
     sk = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -55,7 +57,7 @@ def main():
         frame, addr = sk.recvfrom(1024)
         seq_get = int(str(frame, 'utf8')[8])
         # 接收后去0处理 frame{bytes}
-        if seq_get == frame_expected and get_checksum(frame):
+        if seq_get == frame_expected and get_checksum(frame, GenXString):
             ack = Frame_head + str(frame_expected) + Frame_tail
             sk.sendto(bytes(ack, 'utf8'), addr)
 

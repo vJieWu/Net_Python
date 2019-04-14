@@ -1,6 +1,4 @@
-InfoString1 = '11111010101010101010101010101111'  # 第一位不一定为1
-InfoString2 = '11111010101010101010101010101111'
-GenXString = '10001000000100001'  # 第一位必须为1
+import json
 
 
 def getChecksum(str1, GenXString):
@@ -27,6 +25,11 @@ def getChecksum(str1, GenXString):
 
 
 def main():
+    f = open('lab1.json', encoding='utf-8')
+    config = json.load(f)
+    InfoString1 = config['InfoString1']
+    InfoString2 = config['InfoString2']
+    GenXString = config['GenXString']
     r = len(GenXString) - 1
     Info_r = InfoString1 + '0' * r  # 补0计算校验和
     CRC_code = getChecksum(Info_r, GenXString)

@@ -1,15 +1,6 @@
+import json
 import random
 import socket
-
-UDPPort = 8888
-FilterError = 10
-FilterLost = 10
-Frame_head = '01111110'
-Frame_tail = '01111110'
-InfoString = '11111010101010101010101010101111'
-GenXString = '10001000000100001'  # 第一位必须为1
-ip_port = ('127.0.0.1', UDPPort)
-sk = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 
 def get_checksum(str1, GenXString):
@@ -35,7 +26,7 @@ def get_checksum(str1, GenXString):
     return checksum
 
 
-def gen_frame(frame_to_send):
+def gen_frame(frame_to_send, InfoString, GenXString, Frame_head, Frame_tail):
     crc = get_checksum(frame_to_send + InfoString + '0' * 16, GenXString)
     # crc = bin(CRCCCITT.CRCCCITT().calculate(str(int(frame_to_send + InfoString, 2))))[2:]
     if len(crc) < 16:
@@ -45,7 +36,7 @@ def gen_frame(frame_to_send):
     return frame
 
 
-def filter_frame(frame):
+def filter_frame(frame, ip_port, sk, FilterLost, FilterError):
     if random.randint(1, FilterLost) == 1:
         print('Frame Lost')
     else:
@@ -65,15 +56,29 @@ def filter_frame(frame):
 
 
 def main():
+    f = open('lab3.json', encoding='utf-8')
+    config = json.load(f)
+
+    UDPPort = config['UDPPort']
+    FilterError = config['FilterError']
+    FilterLost = config['FilterLost']
+    Frame_head = config['Frame_head']
+    Frame_tail = config['Frame_tail']
+    InfoString = config['InfoString']
+    GenXString = config['GenXString']
+
     loop = 20
     next_frame_to_send = 0  # seq number of next frame
 
+    ip_port = ('127.0.0.1', UDPPort)
+    sk = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     while loop:
         print('current_send_frame: %d' % next_frame_to_send)
 
         try:
 
-            filter_frame(gen_frame(str(next_frame_to_send)))
+            filter_frame(gen_frame(str(next_frame_to_send), InfoString, GenXString, Frame_head, Frame_tail), ip_port,
+                         sk, FilterLost, FilterError)
             sk.settimeout(5)
 
             info, addr = sk.recvfrom(1024)
