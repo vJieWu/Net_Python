@@ -2,8 +2,8 @@
   "UDPPort": 8888,
   "FilterError": 10,
   "FilterLost": 10,
-  "InfoString": "11111010101010101010101010101111",
   "Frame_head": "01111110",
   "Frame_tail": "01111110",
-  "GenXString": "10001000000100001"
+  "GenXString": "10001000000100001",
+  "filename": "trans.txt"
 }

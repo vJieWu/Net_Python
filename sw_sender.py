@@ -31,7 +31,7 @@ def gen_frame(frame_to_send, InfoString, GenXString, Frame_head, Frame_tail):
     # crc = bin(CRCCCITT.CRCCCITT().calculate(str(int(frame_to_send + InfoString, 2))))[2:]
     if len(crc) < 16:
         crc = '0' * (16 - len(crc)) + crc
-    frame = Frame_head + frame_to_send + InfoString + crc + Frame_tail
+    frame = Frame_head + (frame_to_send + InfoString + crc).replace('11111', '111110') + Frame_tail
 
     return frame
 
@@ -51,6 +51,7 @@ def filter_frame(frame, ip_port, sk, FilterLost, FilterError):
         else:
             print('Frame Sent Successfully')
         # 发送之前0bit填充 frame{str} ################
+        # frame.replace('11111','111110')
         sk.sendto(bytes(frame, 'utf8'), ip_port)
         print('Expected ACK: ' + frame[8])
 
@@ -64,16 +65,31 @@ def main():
     FilterLost = config['FilterLost']
     Frame_head = config['Frame_head']
     Frame_tail = config['Frame_tail']
-    InfoString = config['InfoString']
     GenXString = config['GenXString']
+    filename = config['filename']
 
-    loop = 20
+    f = open(filename, 'rb')
+    msg_bytes = f.read()
+    msg = msg_bytes.decode('utf8')
+    msg_len = len(msg)
+    if msg_len % 20 == 0:
+        loop = msg_len // 20  # 每次传送二进制比特串数据长度为20
+    else:
+        loop = msg_len // 20 + 1
+
     next_frame_to_send = 0  # seq number of next frame
 
     ip_port = ('127.0.0.1', UDPPort)
     sk = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    while loop:
+    sk.sendto(bytes(str(loop), 'utf8'), ip_port)
+    i = 0
+    while i != loop:
         print('current_send_frame: %d' % next_frame_to_send)
+
+        if i == loop - 1:
+            InfoString = msg[i * 20:]
+        else:
+            InfoString = msg[i * 20: (i + 1) * 20]
 
         try:
 
@@ -89,12 +105,13 @@ def main():
 
                 next_frame_to_send = 1 - next_frame_to_send
                 print('next_frame_to_send: %d' % next_frame_to_send)
-                loop -= 1
+                i += 1
             else:
                 print('Receive unexpected ACK')
 
         except OSError:
             print('Receive ACK timeout Err!')
+
 
 
 if __name__ == '__main__':

@@ -46,27 +46,40 @@ def main():
     Frame_tail = config['Frame_tail']
     GenXString = config['GenXString']
 
-    loop = 20
     ip_port = ('127.0.0.1', UDPPort)
     sk = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sk.bind(ip_port)
     frame_expected = 0
+    combine_frame = ''
+    frame, addr = sk.recvfrom(1024)
+    loop = int(frame.decode('utf8'))
 
     while loop:
         print('Frame Expected: ', frame_expected)
         frame, addr = sk.recvfrom(1024)
+
         seq_get = int(str(frame, 'utf8')[8])
         # 接收后去0处理 frame{bytes}
-        if seq_get == frame_expected and get_checksum(frame, GenXString):
+        frame_get = str(frame, 'utf-8')[0:8] + str(frame, 'utf-8')[8:-8].replace('111110', '11111') + str(frame,
+                                                                                                          'utf-8')[-8:]
+
+
+        if (seq_get == frame_expected) and get_checksum(bytes(frame_get, 'utf8'), GenXString):
             ack = Frame_head + str(frame_expected) + Frame_tail
             sk.sendto(bytes(ack, 'utf8'), addr)
-
             print('Sending ACK: %d' % frame_expected)
             frame_expected = 1 - frame_expected
-
+            combine_frame += frame_get[9:-24]
             loop -= 1
+
         else:
-            print('Get unexpected frame')
+            if seq_get != frame_expected:
+                print('Get unexpected frame')
+            else:
+                pass
+
+    file_get = open('file_get.txt', 'w')
+    file_get.write(combine_frame)
 
 
 if __name__ == '__main__':
